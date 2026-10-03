@@ -1,18 +1,24 @@
 # Application registry.
-# Production product IDs and package identities should be added before release.
+# Product IDs are explicit and must match Google Play Console before production.
 apps:
   resonate:
     package_name: com.innotrepid.resonate
     platform: android
-    entitlements:
-      - premium
+    products:
+      - product_id: resonate_premium
+        entitlement: premium
+        type: non_consumable
   mercate:
     package_name: com.innotrepid.mercate
     platform: android
-    entitlements:
-      - pro
+    products:
+      - product_id: mercate_pro
+        entitlement: pro
+        type: non_consumable
   video_player:
     package_name: com.innotrepid.video_player
     platform: android
-    entitlements:
-      - premium
+    products:
+      - product_id: video_player_premium
+        entitlement: premium
+        type: non_consumable

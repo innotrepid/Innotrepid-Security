@@ -14,7 +14,7 @@ export interface AppDefinition {
 
 const registry: Record<string, AppDefinition> = {
   resonate: {
-    packageName: "com.innotrepid.resonate",
+    packageName: "com.Aetherion.Resonate",
     products: [
       {
         productId: "resonate_premium",

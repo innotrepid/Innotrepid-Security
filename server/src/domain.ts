@@ -15,6 +15,7 @@ export interface VerificationRequest {
   app: AppIdentity;
   purchaseToken?: string;
   integrityToken?: string;
+  integrityRequestHash?: string;
 }
 
 export interface Entitlement {

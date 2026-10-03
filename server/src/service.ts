@@ -52,8 +52,16 @@ export async function verify(
     return { status: "denied", reason: integrity.reason ?? "integrity_failed", verificationId };
   }
 
+  if (integrity.appId && integrity.appId !== request.app.appId) {
+    return { status: "denied", reason: "application_mismatch", verificationId };
+  }
+
   if (integrity.packageName && integrity.packageName !== request.app.packageName) {
     return { status: "denied", reason: "package_mismatch", verificationId };
+  }
+
+  if (integrity.subjectId && integrity.subjectId !== purchase.subjectId) {
+    return { status: "denied", reason: "subject_mismatch", verificationId };
   }
 
   const entitlement = {

@@ -7,6 +7,9 @@
     "check": "tsc --noEmit",
     "test": "node --test"
   },
+  "dependencies": {
+    "google-auth-library": "11.1.0"
+  },
   "devDependencies": {
     "typescript": "^5.0.0",
     "@types/node": "^22.0.0"

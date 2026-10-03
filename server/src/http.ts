@@ -52,7 +52,8 @@ function isVerificationRequest(value: unknown): value is VerificationRequest {
     typeof appRecord.version === "string" &&
     (appRecord.buildNumber === undefined || typeof appRecord.buildNumber === "string") &&
     (input.purchaseToken === undefined || typeof input.purchaseToken === "string") &&
-    (input.integrityToken === undefined || typeof input.integrityToken === "string")
+    (input.integrityToken === undefined || typeof input.integrityToken === "string") &&
+    (input.integrityRequestHash === undefined || typeof input.integrityRequestHash === "string")
   );
 }
 

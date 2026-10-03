@@ -1,8 +1,9 @@
 # Application registry.
 # Product IDs are explicit and must match Google Play Console before production.
+# Package IDs are verified against the application repositories where noted.
 apps:
   resonate:
-    package_name: com.innotrepid.resonate
+    package_name: com.Aetherion.Resonate
     platform: android
     products:
       - product_id: resonate_premium

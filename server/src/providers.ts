@@ -27,6 +27,7 @@ export interface IntegrityProvider {
   verify(input: {
     app: AppIdentity;
     integrityToken: string;
+    requestHash?: string;
   }): Promise<IntegrityVerification>;
 }
 

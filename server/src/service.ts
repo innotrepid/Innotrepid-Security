@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { VerificationRequest, VerificationResponse } from "./domain.js";
 import type { EntitlementStore } from "./store.js";
 import type { IntegrityProvider, PurchaseProvider } from "./providers.js";
-import { canGrant, validateApp } from "./registry.js";
+import { canGrant, findProduct, validateApp } from "./registry.js";
 import { hashPurchaseToken } from "./crypto.js";
 
 export interface VerificationServiceOptions {
@@ -35,7 +35,8 @@ export async function verify(
     return { status: "unavailable", reason: "purchase_not_verified", verificationId };
   }
 
-  if (!canGrant(definition, purchase.productId)) {
+  const product = findProduct(definition, purchase.productId);
+  if (!product || !canGrant(definition, product.entitlementId)) {
     return { status: "denied", reason: "product_not_entitled", verificationId };
   }
 
@@ -68,7 +69,7 @@ export async function verify(
   const entitlement = {
     appId: request.app.appId,
     subjectId: purchase.subjectId,
-    id: purchase.productId,
+    id: product.entitlementId,
     status: "active" as const,
     expiresAt: purchase.expiresAt,
     policyVersion: 1,

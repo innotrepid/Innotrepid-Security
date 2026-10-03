@@ -46,6 +46,7 @@ export async function verify(
   const integrity = await options.integrityProvider.verify({
     app: request.app,
     integrityToken: request.integrityToken,
+    requestHash: request.integrityRequestHash,
   });
 
   if (!integrity.valid) {

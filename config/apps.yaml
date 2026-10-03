@@ -1,0 +1,18 @@
+# Application registry.
+# Production product IDs and package identities should be added before release.
+apps:
+  resonate:
+    package_name: com.innotrepid.resonate
+    platform: android
+    entitlements:
+      - premium
+  mercate:
+    package_name: com.innotrepid.mercate
+    platform: android
+    entitlements:
+      - pro
+  video_player:
+    package_name: com.innotrepid.video_player
+    platform: android
+    entitlements:
+      - premium

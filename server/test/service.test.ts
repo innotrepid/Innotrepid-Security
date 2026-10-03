@@ -9,7 +9,7 @@ const purchaseProvider: PurchaseProvider = {
     return {
       valid: true,
       subjectId: "user-1",
-      productId: "premium",
+      productId: "resonate_premium",
     };
   },
 };

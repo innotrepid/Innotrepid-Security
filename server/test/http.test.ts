@@ -54,6 +54,7 @@ test("verify endpoint returns a validated entitlement", async () => {
         app: { appId: "resonate", packageName: "com.innotrepid.resonate", version: "1.0.0" },
         purchaseToken: "purchase-token",
         integrityToken: "integrity-token",
+        integrityRequestHash: "request-hash",
       }),
     });
     assert.equal(response.status, 200);

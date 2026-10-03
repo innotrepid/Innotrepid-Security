@@ -3,7 +3,7 @@ import type { VerificationRequest, VerificationResponse } from "./domain.js";
 import type { EntitlementStore } from "./store.js";
 import type { IntegrityProvider, PurchaseProvider } from "./providers.js";
 import { canGrant, findProduct, validateApp } from "./registry.js";
-import { hashPurchaseToken } from "./crypto.js";
+import { buildIntegrityRequestHash, hashPurchaseToken } from "./crypto.js";
 import type { EntitlementTokenSigner } from "./token.js";
 
 export interface VerificationServiceOptions {
@@ -29,12 +29,12 @@ export async function verify(request: VerificationRequest, options: Verification
     return { status: "denied", reason: "product_not_entitled", verificationId };
   }
 
-  if (!request.integrityToken) return { status: "unavailable", reason: "integrity_evidence_required", verificationId };
+  if (!request.integrityToken) return { status: "unavailable", reason: "integrity_evidence_required", verificationId };\n\n  const expectedIntegrityRequestHash = buildIntegrityRequestHash({\n    requestId: request.requestId,\n    appId: request.app.appId,\n    packageName: request.app.packageName,\n    version: request.app.version,\n    buildNumber: request.app.buildNumber,\n    purchaseToken: request.purchaseToken,\n  });\n  if (request.integrityRequestHash !== expectedIntegrityRequestHash) {\n    return { status: "denied", reason: "integrity_request_hash_mismatch", verificationId };\n  }
 
   const integrity = await options.integrityProvider.verify({
     app: request.app,
     integrityToken: request.integrityToken,
-    requestHash: request.integrityRequestHash,
+    requestHash: expectedIntegrityRequestHash,
   });
   if (!integrity.valid) return { status: "denied", reason: integrity.reason ?? "integrity_failed", verificationId };
   if (integrity.appId && integrity.appId !== request.app.appId) return { status: "denied", reason: "application_mismatch", verificationId };

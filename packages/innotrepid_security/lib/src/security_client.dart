@@ -4,20 +4,28 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 
+import 'entitlement_cache.dart';
 import 'models/entitlement.dart';
 import 'models/security_app.dart';
 import 'models/verification_result.dart';
+import 'signed_entitlement.dart';
 
 class SecurityClient {
   SecurityClient({
     required this.app,
     required this.baseUrl,
+    EntitlementCache? cache,
+    SignedEntitlementVerifier? tokenVerifier,
     http.Client? httpClient,
-  }) : _httpClient = httpClient ?? http.Client();
+  }) : _httpClient = httpClient ?? http.Client(),
+       _cache = cache,
+       _tokenVerifier = tokenVerifier;
 
   final SecurityApp app;
   final String baseUrl;
   final http.Client _httpClient;
+  final EntitlementCache? _cache;
+  final SignedEntitlementVerifier? _tokenVerifier;
   Entitlement? _entitlement;
 
   Entitlement? get entitlement => _entitlement;
@@ -25,12 +33,48 @@ class SecurityClient {
   bool hasEntitlement(String entitlementId) =>
       _entitlement?.id == entitlementId && _entitlement!.isActive;
 
-  void applyEntitlement(Entitlement entitlement) {
-    _entitlement = entitlement;
-  }
+  void applyEntitlement(Entitlement entitlement) => _entitlement = entitlement;
+  void clearEntitlement() => _entitlement = null;
 
-  void clearEntitlement() {
-    _entitlement = null;
+  Future<VerificationResult> loadCachedEntitlement(String entitlementId) async {
+    if (_cache == null || _tokenVerifier == null) {
+      return const VerificationResult(
+        status: VerificationStatus.unavailable,
+        reason: 'secure_cache_not_configured',
+      );
+    }
+    final cached = await _cache.read(
+      appId: app.appId,
+      entitlementId: entitlementId,
+    );
+    if (cached == null) {
+      return const VerificationResult(
+        status: VerificationStatus.unavailable,
+        reason: 'cache_miss',
+      );
+    }
+    final verified = await _tokenVerifier.verify(
+      cached.signedToken,
+      appId: app.appId,
+    );
+    if (verified == null ||
+        verified.id != entitlementId ||
+        !verified.isActive) {
+      await _cache.delete(
+        appId: app.appId,
+        entitlementId: entitlementId,
+      );
+      clearEntitlement();
+      return const VerificationResult(
+        status: VerificationStatus.unavailable,
+        reason: 'cached_entitlement_invalid',
+      );
+    }
+    applyEntitlement(verified);
+    return VerificationResult(
+      status: VerificationStatus.verified,
+      entitlement: verified,
+    );
   }
 
   Map<String, dynamic> buildVerificationRequest({
@@ -44,14 +88,12 @@ class SecurityClient {
       if (purchaseToken != null) 'purchaseToken': purchaseToken,
       if (integrityToken != null) 'integrityToken': integrityToken,
     };
-
     if (purchaseToken != null) {
       request['integrityRequestHash'] = buildIntegrityRequestHash(
         requestId: requestId,
         purchaseToken: purchaseToken,
       );
     }
-
     return request;
   }
 
@@ -62,7 +104,6 @@ class SecurityClient {
     final purchaseHash = purchaseToken == null
         ? ''
         : _sha256Base64Url(utf8.encode(purchaseToken));
-
     final canonical = [
       requestId,
       app.appId,
@@ -71,7 +112,6 @@ class SecurityClient {
       app.buildNumber ?? '',
       purchaseHash,
     ].join('|');
-
     return _sha256Base64Url(utf8.encode(canonical));
   }
 
@@ -81,35 +121,47 @@ class SecurityClient {
     String? requestId,
   }) async {
     final id = requestId ?? _newRequestId();
-    final payload = buildVerificationRequest(
-      requestId: id,
-      purchaseToken: purchaseToken,
-      integrityToken: integrityToken,
-    );
-
     try {
-      final response = await _httpClient
-          .post(
-            Uri.parse('${baseUrl.replaceFirst(RegExp(r'/+$'), '')}/v1/verify'),
-            headers: const {'content-type': 'application/json'},
-            body: jsonEncode(payload),
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await _httpClient.post(
+        Uri.parse(
+          '\${baseUrl.replaceFirst(RegExp(r'/+$'), '')}/v1/verify',
+        ),
+        headers: const {'content-type': 'application/json'},
+        body: jsonEncode(
+          buildVerificationRequest(
+            requestId: id,
+            purchaseToken: purchaseToken,
+            integrityToken: integrityToken,
+          ),
+        ),
+      ).timeout(const Duration(seconds: 15));
 
       final body = _decodeObject(response.body);
-
       if (response.statusCode == 200 && body['status'] == 'verified') {
-        final rawEntitlement = body['entitlement'];
-        if (rawEntitlement is! Map) {
+        final token = body['signedEntitlementToken'] as String?;
+        if (token == null || _tokenVerifier == null) {
           return const VerificationResult(
             status: VerificationStatus.unavailable,
-            reason: 'entitlement_missing',
+            reason: 'signed_entitlement_required',
           );
         }
-
-        final entitlement = Entitlement.fromJson(
-          Map<String, dynamic>.from(rawEntitlement),
+        final entitlement = await _tokenVerifier.verify(
+          token,
+          appId: app.appId,
         );
+        if (entitlement == null) {
+          return const VerificationResult(
+            status: VerificationStatus.denied,
+            reason: 'invalid_entitlement_signature',
+          );
+        }
+        if (_cache != null) {
+          await _cache.write(
+            appId: app.appId,
+            entitlement: entitlement,
+            signedToken: token,
+          );
+        }
         applyEntitlement(entitlement);
         return VerificationResult(
           status: VerificationStatus.verified,
@@ -137,6 +189,8 @@ class SecurityClient {
     }
   }
 
+  void dispose() => _httpClient.close();
+
   Map<String, dynamic> _decodeObject(String source) {
     final decoded = jsonDecode(source);
     if (decoded is! Map) {
@@ -149,10 +203,9 @@ class SecurityClient {
     final random = Random.secure();
     final timestamp = DateTime.now().toUtc().microsecondsSinceEpoch;
     final entropy = List<int>.generate(16, (_) => random.nextInt(256));
-    final digest = sha256.convert(
-      utf8.encode('$timestamp:${base64UrlEncode(entropy)}'),
-    );
-    return digest.toString();
+    return sha256
+        .convert(utf8.encode('\$timestamp:\${base64UrlEncode(entropy)}'))
+        .toString();
   }
 
   String _sha256Base64Url(List<int> bytes) =>

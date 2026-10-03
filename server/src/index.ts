@@ -5,3 +5,5 @@ export * from "./policy.js";
 export * from "./store.js";
 export * from "./crypto.js";
 export * from "./entitlements.js";
+export * from "./providers.js";
+export * from "./service.js";

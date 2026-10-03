@@ -1,7 +1,4 @@
-export type VerificationStatus =
-  | "verified"
-  | "denied"
-  | "unavailable";
+export type VerificationStatus = "verified" | "denied" | "unavailable";
 
 export interface AppIdentity {
   appId: string;
@@ -28,6 +25,7 @@ export interface Entitlement {
 export interface VerificationResponse {
   status: VerificationStatus;
   entitlement?: Entitlement;
+  signedEntitlementToken?: string;
   reason?: string;
   verificationId: string;
 }

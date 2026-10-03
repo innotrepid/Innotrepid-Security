@@ -1,0 +1,25 @@
+# Application registry.
+# Product IDs are explicit and must match Google Play Console before production.
+# Package IDs are verified against the application repositories where noted.
+apps:
+  resonate:
+    package_name: com.Aetherion.Resonate
+    platform: android
+    products:
+      - product_id: resonate_premium
+        entitlement: premium
+        type: non_consumable
+  mercate:
+    package_name: com.innotrepid.mercate
+    platform: android
+    products:
+      - product_id: mercate_pro
+        entitlement: pro
+        type: non_consumable
+  video_player:
+    package_name: com.innotrepid.video_player
+    platform: android
+    products:
+      - product_id: video_player_premium
+        entitlement: premium
+        type: non_consumable

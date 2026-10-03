@@ -1,16 +1,22 @@
 group = "com.innotrepid.security"
 
 plugins {
-    id("com.android.library") version "8.11.1"
-    id("org.jetbrains.kotlin.android") version "2.2.20"
+    id("com.android.library")
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
     namespace = "com.innotrepid.security"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
-        minSdk = 23
+        minSdk = 24
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 

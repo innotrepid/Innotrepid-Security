@@ -1,52 +1,47 @@
-# Roadmap
+# Security Roadmap
 
 ## Phase 1 — Foundation
-- Repository structure
-- Application identity model
-- Entitlement model
-- SDK/server contracts
-- Security documentation
-- Secret-handling rules
+- Central repository and security model.
+- App registry and entitlement model.
+- Server verification boundary.
+- Google Play purchase and Play Integrity provider interfaces.
+- Flutter request binding and verification client.
 
-## Phase 2 — Flutter SDK
-- SDK initialization
-- Application registration
-- Entitlement state model
-- Secure local cache
-- Verification client
-- Feature-gate API
+## Phase 2 — Flutter commerce client
+- Google Play Billing through Flutter's official in_app_purchase plugin.
+- Store product → security entitlement mapping.
+- Purchase evidence extraction.
+- Purchase completion and restore flow.
+- Secure entitlement cache using platform secure storage.
 
 ## Phase 3 — Verification backend
-- App-request authentication
-- Google Play purchase verification
-- Play Integrity verification
-- Entitlement resolution
-- Revocation
-- Audit events
-- Rate limiting
+- Google Play purchase verification.
+- Play Integrity verification with request-hash binding.
+- Durable entitlement storage.
+- Replay protection, rate limits, audit events and revocation.
 
-## Phase 4 — First production integration
-- Resonate integration
-- Premium product mapping
-- Purchase restore
-- Offline grace policy
-- Failure/recovery UX
+## Phase 4 — Signed entitlement + offline grace
+- Server-signed short-lived entitlement token.
+- Public-key verification in the client.
+- Secure local cache of the signed token.
+- Bounded offline grace.
+- Explicit unavailable vs denied behavior.
 
-## Phase 5 — Reuse
-- Mercate integration
-- Video Player integration
-- Shared release/versioning process
+## Phase 5 — First real app
+- Verify the actual package ID and Play product IDs for Resonate.
+- Integrate the security client.
+- Gate one premium feature first.
+- Test purchase, restore, reinstall, revoke and offline cases.
+- Only then reuse the system in Mercate and Video Player.
 
 ## Phase 6 — Hardening
-- Abuse detection
-- Replay resistance
-- Key rotation
-- Certificate/package validation
-- Automated security tests
-- Operational monitoring
+- Configurable Play Integrity device/licensing verdict policy.
+- Key rotation.
+- Abuse monitoring and anomaly detection.
+- Release-build/obfuscation review.
+- Incident/revocation procedures.
 
 ## Non-goals
-
-- Making software mathematically impossible to pirate.
-- Embedding master secrets in Flutter applications.
-- Blocking legitimate users merely because verification temporarily fails.
+- Making piracy mathematically impossible.
+- Putting master secrets in APKs.
+- Crashing or permanently locking out legitimate users because verification is temporarily unavailable.

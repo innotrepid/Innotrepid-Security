@@ -1,0 +1,46 @@
+name: Security CI
+
+on:
+  push:
+    branches: [main, foundation]
+  pull_request:
+    branches: [main, foundation]
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: stable
+          channel: stable
+          cache: true
+      - name: Flutter pub get
+        working-directory: packages/innotrepid_security
+        run: flutter pub get
+      - name: Flutter analyze
+        working-directory: packages/innotrepid_security
+        run: flutter analyze
+      - name: Flutter test
+        working-directory: packages/innotrepid_security
+        run: flutter test
+
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Install dependencies
+        working-directory: server
+        run: npm install
+      - name: Typecheck
+        working-directory: server
+        run: npm run check
+      - name: Test
+        working-directory: server
+        run: npm test

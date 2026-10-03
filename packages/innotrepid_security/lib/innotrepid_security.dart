@@ -1,5 +1,6 @@
 library innotrepid_security;
 
+export 'src/android_play_integrity.dart';
 export 'src/billing.dart';
 export 'src/entitlement_cache.dart';
 export 'src/integrity.dart';

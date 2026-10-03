@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 
 import 'entitlement_cache.dart';
+import 'integrity.dart';
 import 'models/entitlement.dart';
 import 'models/security_app.dart';
 import 'models/verification_result.dart';
@@ -16,16 +17,19 @@ class SecurityClient {
     required this.baseUrl,
     EntitlementCache? cache,
     SignedEntitlementVerifier? tokenVerifier,
+    IntegrityTokenProvider? integrityProvider,
     http.Client? httpClient,
-  }) : _httpClient = httpClient ?? http.Client(),
-       _cache = cache,
-       _tokenVerifier = tokenVerifier;
+  })  : _httpClient = httpClient ?? http.Client(),
+        _cache = cache,
+        _tokenVerifier = tokenVerifier,
+        _integrityProvider = integrityProvider;
 
   final SecurityApp app;
   final String baseUrl;
   final http.Client _httpClient;
   final EntitlementCache? _cache;
   final SignedEntitlementVerifier? _tokenVerifier;
+  final IntegrityTokenProvider? _integrityProvider;
   Entitlement? _entitlement;
 
   Entitlement? get entitlement => _entitlement;
@@ -122,16 +126,41 @@ class SecurityClient {
   }) async {
     final id = requestId ?? _newRequestId();
     try {
+      String? resolvedIntegrityToken = integrityToken;
+      if (purchaseToken != null && resolvedIntegrityToken == null) {
+        final provider = _integrityProvider;
+        if (provider == null) {
+          return const VerificationResult(
+            status: VerificationStatus.unavailable,
+            reason: 'integrity_provider_not_configured',
+          );
+        }
+        final requestHash = buildIntegrityRequestHash(
+          requestId: id,
+          purchaseToken: purchaseToken,
+        );
+        resolvedIntegrityToken = await provider.requestToken(
+          requestHash: requestHash,
+        );
+        if (resolvedIntegrityToken == null ||
+            resolvedIntegrityToken.isEmpty) {
+          return const VerificationResult(
+            status: VerificationStatus.unavailable,
+            reason: 'integrity_token_unavailable',
+          );
+        }
+      }
+
       final response = await _httpClient.post(
         Uri.parse(
-          '\${baseUrl.replaceFirst(RegExp(r'/+$'), '')}/v1/verify',
+          '${baseUrl.replaceFirst(RegExp(r'/+$'), '')}/v1/verify',
         ),
         headers: const {'content-type': 'application/json'},
         body: jsonEncode(
           buildVerificationRequest(
             requestId: id,
             purchaseToken: purchaseToken,
-            integrityToken: integrityToken,
+            integrityToken: resolvedIntegrityToken,
           ),
         ),
       ).timeout(const Duration(seconds: 15));
@@ -204,7 +233,7 @@ class SecurityClient {
     final timestamp = DateTime.now().toUtc().microsecondsSinceEpoch;
     final entropy = List<int>.generate(16, (_) => random.nextInt(256));
     return sha256
-        .convert(utf8.encode('\$timestamp:\${base64UrlEncode(entropy)}'))
+        .convert(utf8.encode('$timestamp:${base64UrlEncode(entropy)}'))
         .toString();
   }
 

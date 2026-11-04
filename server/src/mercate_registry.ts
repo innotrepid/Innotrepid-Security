@@ -34,14 +34,14 @@ export interface MercateLicenseAuditEvent {
 }
 
 export interface MercateLicenseTransaction {
-  getCurrent(businessId: string): MercateLicenseRecord | undefined;
-  getLicense(businessId: string, licenseId: string): MercateLicenseRecord | undefined;
-  getIdempotentResult(businessId: string, key: string): {
+  getCurrent(businessId: string): Promise<MercateLicenseRecord | undefined>;
+  getLicense(businessId: string, licenseId: string): Promise<MercateLicenseRecord | undefined>;
+  getIdempotentResult(businessId: string, key: string): Promise<{
     record: MercateLicenseRecord;
     action: MercateLicenseAuditEvent["action"];
-  } | undefined;
-  putLicense(record: MercateLicenseRecord): void;
-  addAuditEvent(event: MercateLicenseAuditEvent): void;
+  } | undefined>;
+  putLicense(record: MercateLicenseRecord): Promise<void>;
+  addAuditEvent(event: MercateLicenseAuditEvent): Promise<void>;
 }
 
 export interface MercateLicenseRegistryStore {
@@ -52,7 +52,7 @@ export interface MercateLicenseRegistryStore {
    */
   transact<T>(
     businessId: string,
-    operation: (transaction: MercateLicenseTransaction) => T,
+    operation: (transaction: MercateLicenseTransaction) => Promise<T>,
   ): Promise<T>;
 }
 
@@ -117,10 +117,10 @@ export class MercateLicenseRegistryService {
   issue(command: IssueMercateLicenseCommand): Promise<MercateLicenseLifecycleResult> {
     requireCommandIdentity(command.businessId, command.actorId, command.idempotencyKey);
     const now = requireNow(command.now);
-    return this.store.transact(command.businessId, (tx) => {
-      const replay = tx.getIdempotentResult(command.businessId, command.idempotencyKey);
+    return this.store.transact(command.businessId, async (tx) => {
+      const replay = await tx.getIdempotentResult(command.businessId, command.idempotencyKey);
       if (replay) return { ...replay, idempotentReplay: true };
-      if (tx.getCurrent(command.businessId)) {
+      if (await tx.getCurrent(command.businessId)) {
         throw new Error("business_already_has_current_license");
       }
       return this.createRecord(tx, {
@@ -142,7 +142,7 @@ export class MercateLicenseRegistryService {
     return this.store.transact(command.businessId, (tx) => {
       const replay = tx.getIdempotentResult(command.businessId, command.idempotencyKey);
       if (replay) return { ...replay, idempotentReplay: true };
-      const current = tx.getCurrent(command.businessId);
+      const current = await tx.getCurrent(command.businessId);
       if (!current) throw new Error("current_license_not_found");
       const anchor = new Date(Math.max(
         now.getTime(),
@@ -210,7 +210,7 @@ export class MercateLicenseRegistryService {
         revokedBy: command.actorId,
         revocationReason: command.reason.trim(),
       };
-      tx.putLicense(revoked);
+      await tx.putLicense(revoked);
       const event: MercateLicenseAuditEvent = {
         eventId: randomUUID(),
         businessId: command.businessId,
@@ -220,7 +220,7 @@ export class MercateLicenseRegistryService {
         occurredAt: now.toISOString(),
         idempotencyKey: command.idempotencyKey,
       };
-      tx.addAuditEvent(event);
+      await tx.addAuditEvent(event);
       return { record: revoked, action: "revoked", idempotentReplay: false };
     });
   }
@@ -238,7 +238,7 @@ export class MercateLicenseRegistryService {
       maxDevices: number | null;
       previous?: MercateLicenseRecord;
     },
-  ): MercateLicenseLifecycleResult {
+  ): Promise<MercateLicenseLifecycleResult> {
     const issued = issueMercateLicense({
       businessId: input.businessId,
       issuedAt: input.issuedAt,
@@ -261,8 +261,8 @@ export class MercateLicenseRegistryService {
         replacedByLicenseId: record.licenseId,
       });
     }
-    tx.putLicense(record);
-    tx.addAuditEvent({
+    await tx.putLicense(record);
+    await tx.addAuditEvent({
       eventId: randomUUID(),
       businessId: input.businessId,
       licenseId: record.licenseId,
@@ -300,13 +300,13 @@ export class MemoryMercateLicenseRegistryStore implements MercateLicenseRegistry
     await previous;
     try {
       const transaction: MercateLicenseTransaction = {
-        getCurrent: (id) => this.findCurrent(id),
-        getLicense: (id, licenseId) => this.licenses.get(this.licenseKey(id, licenseId)),
-        getIdempotentResult: (id, key) => this.idempotency.get(this.idempotencyKey(id, key)),
-        putLicense: (record) => {
+        getCurrent: async (id) => this.findCurrent(id),
+        getLicense: async (id, licenseId) => this.licenses.get(this.licenseKey(id, licenseId)),
+        getIdempotentResult: async (id, key) => this.idempotency.get(this.idempotencyKey(id, key)),
+        putLicense: async (record) => {
           this.licenses.set(this.licenseKey(record.businessId, record.licenseId), record);
         },
-        addAuditEvent: (event) => {
+        addAuditEvent: async (event) => {
           this.audits.push(event);
           const record = this.licenses.get(this.licenseKey(event.businessId, event.licenseId));
           if (record) {
@@ -317,7 +317,7 @@ export class MemoryMercateLicenseRegistryStore implements MercateLicenseRegistry
           }
         },
       };
-      return operation(transaction);
+      return await operation(transaction);
     } finally {
       release();
       if (this.queues.get(businessId) === queued) this.queues.delete(businessId);

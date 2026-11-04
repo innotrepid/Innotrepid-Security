@@ -139,8 +139,8 @@ export class MercateLicenseRegistryService {
   renew(command: RenewMercateLicenseCommand): Promise<MercateLicenseLifecycleResult> {
     requireCommandIdentity(command.businessId, command.actorId, command.idempotencyKey);
     const now = requireNow(command.now);
-    return this.store.transact(command.businessId, (tx) => {
-      const replay = tx.getIdempotentResult(command.businessId, command.idempotencyKey);
+    return this.store.transact(command.businessId, async (tx) => {
+      const replay = await tx.getIdempotentResult(command.businessId, command.idempotencyKey);
       if (replay) return { ...replay, idempotentReplay: true };
       const current = await tx.getCurrent(command.businessId);
       if (!current) throw new Error("current_license_not_found");
@@ -225,7 +225,7 @@ export class MercateLicenseRegistryService {
     });
   }
 
-  private createRecord(
+  private async createRecord(
     tx: MercateLicenseTransaction,
     input: {
       businessId: string;
@@ -255,7 +255,7 @@ export class MercateLicenseRegistryService {
       createdAt: input.issuedAt.toISOString(),
     };
     if (input.previous) {
-      tx.putLicense({
+      await tx.putLicense({
         ...input.previous,
         status: "superseded",
         replacedByLicenseId: record.licenseId,
@@ -290,7 +290,7 @@ export class MemoryMercateLicenseRegistryStore implements MercateLicenseRegistry
 
   async transact<T>(
     businessId: string,
-    operation: (transaction: MercateLicenseTransaction) => T,
+    operation: (transaction: MercateLicenseTransaction) => Promise<T>,
   ): Promise<T> {
     const previous = this.queues.get(businessId) ?? Promise.resolve();
     let release!: () => void;

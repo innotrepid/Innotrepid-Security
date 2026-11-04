@@ -73,6 +73,6 @@ class LicenseClaims {
   }
 
   static bool _hasExplicitOffset(String value) =>
-      RegExp(r'(?:Z|[+-]\\d{2}:\\d{2})$', caseSensitive: false)
+      RegExp(r'(?:Z|[+-]\d{2}:\d{2})$', caseSensitive: false)
           .hasMatch(value);
 }

@@ -56,12 +56,12 @@ test("custom expiry requires an explicit offset and must follow issue time", () 
   }), /later than issuedAt/);
 });
 
-test("issued token matches Mercate v1 two-part Ed25519 contract", () => {
+test("issued token matches Mercate v1 two-part Ed25519 contract", async () => {
   const { privateKey, publicKey } = generateKeyPairSync("ed25519");
   const signer = new PemEd25519MercateLicenseSigner(
     privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
   );
-  const result = issueMercateLicense({
+  const result = await issueMercateLicense({
     businessId: "business-uuid",
     licenseId: "license-123",
     issuedAt: at("2026-11-04T09:15:00.000Z"),
@@ -83,17 +83,17 @@ test("issued token matches Mercate v1 two-part Ed25519 contract", () => {
   assert.equal(result.claims.maxDevices, 2);
 });
 
-test("invalid policy values are rejected", () => {
+test("invalid policy values are rejected before asynchronous signing", async () => {
   const { privateKey } = generateKeyPairSync("ed25519");
   const signer = new PemEd25519MercateLicenseSigner(
     privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
   );
-  assert.throws(() => issueMercateLicense({
+  await assert.rejects(issueMercateLicense({
     businessId: "business-uuid",
     term: { kind: "weekly" },
     graceDays: -1,
   }, signer), /graceDays/);
-  assert.throws(() => issueMercateLicense({
+  await assert.rejects(issueMercateLicense({
     businessId: "business-uuid",
     term: { kind: "weekly" },
     maxDevices: 0,

@@ -37,7 +37,7 @@ void main() {
   test('accepts a verified response only with a valid signed entitlement', () async {
     final algorithm = Ed25519();
     final keyPair = await algorithm.newKeyPair();
-    final publicKey = await keyPair.extractPublicKey() as SimplePublicKey;
+    final publicKey = await keyPair.extractPublicKey();
     final publicKeyBase64Url =
         base64UrlEncode(publicKey.bytes).replaceAll('=', '');
     final tokenVerifier = SignedEntitlementVerifier(

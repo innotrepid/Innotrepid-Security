@@ -5,7 +5,7 @@ import 'package:innotrepid_security/innotrepid_security.dart';
 void main() {
   test('verifies a token emitted by the Mercate TypeScript server issuer', () async {
     const publicKeyBase64Url = 'Olz6mYSwK869UfCu4yAmgNpoBL8kQdzEaZBZ1fyoxrk';
-    const payload = 'eyJz' 'cGhl' 'bWFWZXJzaW9uIjoxLCJwcm9kdWN0IjoibWVyY2F0ZSIsImJ1c2luZXNzSWQiOiJjcm9zcy1sYW5ndWFnZS1idXNpbmVzcy0wMDEiLCJsaWNlbnNlSWQiOiJjcm9zcy1sYW5ndWFnZS1saWNlbnNlLTAwMSIsImlzc3VlZEF0IjoiMjAyNi0xMS0wNFQwOToxNTowMC4wMDBaIiwiZXhwaXJlc0F0IjoiMjAyNi0xMS0xMVQwOToxNTowMC4wMDBaIiwiZ3JhY2VEYXlzIjo0LCJtYXhEZXZpY2VzIjozfQ';
+    const payload = 'eyJzY2hl' 'bWFWZXJzaW9uIjoxLCJwcm9kdWN0IjoibWVyY2F0ZSIsImJ1c2luZXNzSWQiOiJjcm9zcy1sYW5ndWFnZS1idXNpbmVzcy0wMDEiLCJsaWNlbnNlSWQiOiJjcm9zcy1sYW5ndWFnZS1saWNlbnNlLTAwMSIsImlzc3VlZEF0IjoiMjAyNi0xMS0wNFQwOToxNTowMC4wMDBaIiwiZXhwaXJlc0F0IjoiMjAyNi0xMS0xMVQwOToxNTowMC4wMDBaIiwiZ3JhY2VEYXlzIjo0LCJtYXhEZXZpY2VzIjozfQ';
     const signature = '26ON5IivEoWRgd3-2p49lDzTuatmgLhbFjrQBOgYCqbN3UmKxnkDko9hvkBcl-AFKAQcK4AY-3eLgVJXAXniAA';
     final token = '$payload.$signature';
 

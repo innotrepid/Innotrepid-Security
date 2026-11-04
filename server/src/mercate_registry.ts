@@ -295,7 +295,8 @@ export class MemoryMercateLicenseRegistryStore implements MercateLicenseRegistry
     const previous = this.queues.get(businessId) ?? Promise.resolve();
     let release!: () => void;
     const gate = new Promise<void>((resolve) => { release = resolve; });
-    this.queues.set(businessId, previous.then(() => gate));
+    const queued = previous.then(() => gate);
+    this.queues.set(businessId, queued);
     await previous;
     try {
       const transaction: MercateLicenseTransaction = {
@@ -319,7 +320,7 @@ export class MemoryMercateLicenseRegistryStore implements MercateLicenseRegistry
       return operation(transaction);
     } finally {
       release();
-      if (this.queues.get(businessId) === gate) this.queues.delete(businessId);
+      if (this.queues.get(businessId) === queued) this.queues.delete(businessId);
     }
   }
 

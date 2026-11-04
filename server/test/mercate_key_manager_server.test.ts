@@ -21,7 +21,6 @@ test("composition creates a separate server without listening", () => {
   });
   assert.ok(server instanceof Server);
   assert.equal(server.listening, false);
-  server.close();
 });
 
 test("composition refuses an empty operator allowlist", () => {

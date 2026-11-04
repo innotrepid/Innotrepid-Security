@@ -3,6 +3,7 @@ const $ = (id) => document.getElementById(id);
 let idToken = null;
 let selectedBusinessId = null;
 let currentOperator = null;
+let pendingMutation = null;
 
 const setHidden = (id, hidden) => $(id).classList.toggle("hidden", hidden);
 const showFeedback = (message, isError = false) => {
@@ -31,6 +32,8 @@ function signOut() {
   $("sign-out").classList.add("hidden");
   $("submit-action").disabled = true;
   $("submit-action").textContent = "Sign in to continue";
+  $("activation-token").value = "";
+  setHidden("result-panel", true);
   setHidden("auth-notice", false);
 }
 
@@ -170,7 +173,7 @@ function renderHistory(data) {
   if (events.length) {
     $("history-content").insertAdjacentHTML("beforeend",
       '<h3 class="audit-heading">Recent audit events</h3>' + events.map((event) =>
-        `<div class="audit-row"><strong>${escapeHtml(event.action)}</strong><span>${escapeHtml(event.actorId)}</span><time>${escapeHtml(event.createdAt || event.at || "")}</time></div>`
+        `<div class="audit-row"><strong>${escapeHtml(event.action)}</strong><span>${escapeHtml(event.actorId)}</span><time>${escapeHtml(event.occurredAt || "")}</time></div>`
       ).join(""));
   }
   setHidden("history-panel", false);
@@ -209,7 +212,8 @@ async function submitAction(event) {
       : kind === "monthly" ? { kind: "monthly", timeZone: "Africa/Nairobi" } : { kind: "weekly" };
     body.graceDays = Number($("grace-days").value);
     const maxDevices = $("max-devices").value.trim();
-    body.maxDevices = maxDevices ? Number(maxDevices) : null;
+    if (maxDevices) body.maxDevices = Number(maxDevices);
+    else if (action === "issue") body.maxDevices = null;
     if (!Number.isInteger(body.graceDays) || body.graceDays < 0 || body.graceDays > 365) throw new Error("Grace days must be between 0 and 365.");
     if (body.maxDevices !== null && (!Number.isInteger(body.maxDevices) || body.maxDevices < 1 || body.maxDevices > 10000)) throw new Error("Maximum devices must be between 1 and 10,000, or blank for unlimited.");
   } else {
@@ -217,12 +221,24 @@ async function submitAction(event) {
     if (!body.reason) throw new Error("A reason is required for replacement or revocation.");
   }
   const labels = { issue: "Issue licence", renew: "Renew licence", replace: "Replace licence", revoke: "Revoke licence" };
+  const requestBody = JSON.stringify(body);
+  if (pendingMutation && pendingMutation.body !== requestBody) {
+    throw new Error("A previous request may still have completed. Retry the exact same operation and values before changing anything.");
+  }
   if (!confirm(labels[action] + " for business " + selectedBusinessId + "?")) return;
-  const result = await api("/licenses/" + action, {
-    method: "POST",
-    headers: { "Idempotency-Key": crypto.randomUUID() },
-    body: JSON.stringify(body)
-  });
+  if (!pendingMutation) pendingMutation = { body: requestBody, key: crypto.randomUUID() };
+  $("submit-action").disabled = true;
+  let result;
+  try {
+    result = await api("/licenses/" + action, {
+      method: "POST",
+      headers: { "Idempotency-Key": pendingMutation.key },
+      body: requestBody
+    });
+    pendingMutation = null;
+  } finally {
+    $("submit-action").disabled = false;
+  }
   $("result-title").textContent = action === "revoke" ? "Licence revoked" : "Activation code";
   $("result-message").textContent = action === "revoke"
     ? "The licence was revoked. No activation code is returned for revocation."
@@ -231,7 +247,7 @@ async function submitAction(event) {
   $("copy-token").disabled = !result.activationToken;
   setHidden("result-panel", false);
   await loadHistory(selectedBusinessId);
-  showFeedback(labels[action] + " completed.");
+  showFeedback(labels[action] + (result.idempotentReplay ? " confirmed (safe retry)." : " completed."));
 }
 
 $("sign-in").addEventListener("click", () => beginGoogleSignIn().catch((error) => showFeedback(error.message, true)));

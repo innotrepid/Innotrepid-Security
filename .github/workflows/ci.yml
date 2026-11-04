@@ -42,3 +42,19 @@ jobs:
       - name: Test
         working-directory: server
         run: npm test
+
+  secure-storage-adapter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/innotrepid_security_secure_storage
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.9
+          channel: stable
+      - name: Flutter pub get
+        run: flutter pub get
+      - name: Flutter analyze
+        run: flutter analyze

@@ -10,7 +10,7 @@ const database = {
   query: async () => ({ rows: [] }),
   connect: async () => ({ query: async () => ({ rows: [] }), release: () => {} }),
 };
-const signer = { sign: () => new Uint8Array(64) };
+const signer = { sign: async () => new Uint8Array(64) };
 
 test("composition creates a separate server without listening", () => {
   const server = createMercateKeyManagerServer({

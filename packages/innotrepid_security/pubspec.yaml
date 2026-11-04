@@ -12,7 +12,6 @@ dependencies:
   cryptography: ^2.9.0
   flutter:
     sdk: flutter
-  flutter_secure_storage: ^11.2.0
   http: ^1.6.0
   in_app_purchase: ^3.3.1
 

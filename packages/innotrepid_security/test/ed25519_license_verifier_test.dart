@@ -7,13 +7,14 @@ import 'package:innotrepid_security/innotrepid_security.dart';
 void main() {
   late Ed25519 algorithm;
   late KeyPair keyPair;
+  late SimplePublicKey publicKey;
   late String publicKeyEncoded;
   late String token;
 
   setUp(() async {
     algorithm = Ed25519();
     keyPair = await algorithm.newKeyPair();
-    final publicKey = await keyPair.extractPublicKey();
+    publicKey = await keyPair.extractPublicKey() as SimplePublicKey;
     publicKeyEncoded = base64Url.encode(publicKey.bytes).replaceAll('=', '');
 
     final payload = utf8.encode(jsonEncode({

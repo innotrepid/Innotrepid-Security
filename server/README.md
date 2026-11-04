@@ -24,3 +24,7 @@ Do not put a reusable server secret in a Flutter APK. A client-held API key is n
 ## Secrets
 
 Production credentials and signing keys must be supplied through the deployment environment or a secret manager. They must never be committed to this repository.
+
+## Mercate licence signing
+
+The optional AWS KMS Ed25519 signer and its security requirements are documented in [AWS KMS Ed25519 signer adapter](../docs/AWS_KMS_SIGNER.md). It is not configured or provisioned by default.

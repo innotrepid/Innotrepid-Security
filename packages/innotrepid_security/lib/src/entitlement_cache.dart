@@ -1,20 +1,19 @@
 import 'dart:convert';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import 'models/entitlement.dart';
+import 'secure_storage.dart';
 
 class EntitlementCache {
   EntitlementCache({
-    FlutterSecureStorage? storage,
+    required SecureKeyValueStorage storage,
     this.keyPrefix = 'innotrepid_security.',
-  }) : _storage = storage ?? const FlutterSecureStorage();
+  }) : _storage = storage;
 
-  final FlutterSecureStorage _storage;
+  final SecureKeyValueStorage _storage;
   final String keyPrefix;
 
   String _key(String appId, String entitlementId) =>
-      '\${keyPrefix}\$appId.\$entitlementId';
+      '${keyPrefix}$appId.$entitlementId';
 
   Future<void> write({
     required String appId,

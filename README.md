@@ -36,3 +36,19 @@ No client-side secret is a reliable authorization mechanism. Premium authorizati
 ## Status
 
 Foundation phase. No production credentials, signing secrets, purchase tokens, or private keys belong in this repository.
+
+## Optional platform storage
+
+The core `innotrepid_security` package does not require a platform secure-storage plugin. Applications that need the signed-entitlement cache provide a `SecureKeyValueStorage` implementation.
+
+For Flutter Secure Storage, add the optional `innotrepid_security_secure_storage` package and configure:
+
+```dart
+final cache = EntitlementCache(
+  storage: FlutterSecureStorageAdapter(),
+);
+```
+
+Apps that only need offline Ed25519 licence verification can depend on the core package without pulling in `flutter_secure_storage`. This keeps unrelated platform plugin constraints out of direct-distribution apps.
+
+The cache uses distinct keys per app ID and entitlement ID; tests cover cross-app isolation and targeted deletion.

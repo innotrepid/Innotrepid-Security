@@ -12,3 +12,4 @@ export 'src/signed_entitlement.dart';
 
 export 'src/ed25519_license_verifier.dart';
 export 'src/models/license_claims.dart';
+export 'src/secure_storage.dart';

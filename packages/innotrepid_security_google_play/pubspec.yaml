@@ -1,0 +1,22 @@
+name: innotrepid_security_google_play
+description: Optional Google Play Billing and Play Integrity adapters for Innotrepid Security.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.10.0 <4.0.0"
+  flutter: ">=3.38.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  in_app_purchase: ^3.3.1
+  innotrepid_security:
+    path: ../innotrepid_security
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.innotrepid.security.googleplay
+        pluginClass: InnotrepidSecurityPlayIntegrityPlugin

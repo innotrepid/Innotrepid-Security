@@ -343,6 +343,17 @@ export class MemoryMercateLicenseRegistryStore implements MercateLicenseRegistry
     }
   }
 
+  listHistory(businessId: string): MercateLicenseRecord[] {
+    return [...this.licenses.values()]
+      .filter((record) => record.businessId === businessId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  listAuditEvents(businessId: string): MercateLicenseAuditEvent[] {
+    return this.audits
+      .filter((event) => event.businessId === businessId)
+      .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
+  }
   private findCurrent(businessId: string): MercateLicenseRecord | undefined {
     return [...this.licenses.values()].find(
       (record) => record.businessId === businessId && record.status === "current",

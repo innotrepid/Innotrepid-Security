@@ -84,7 +84,7 @@ export class KeyManagerOperatorAuthenticator {
       throw new OperatorAuthenticationError("missing_bearer_token");
     }
     const token = authorizationHeader.slice("Bearer ".length).trim();
-    if (!token || token.length > 16_384 || /\\s/.test(token)) {
+    if (!token || token.length > 16_384 || /\s/.test(token)) {
       throw new OperatorAuthenticationError("invalid_bearer_token");
     }
 

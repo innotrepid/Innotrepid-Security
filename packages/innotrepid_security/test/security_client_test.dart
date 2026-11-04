@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:http/http.dart' as http;
@@ -8,7 +9,7 @@ import 'package:innotrepid_security/innotrepid_security.dart';
 void main() {
   final app = const SecurityApp(
     appId: 'resonate',
-    packageName: 'com.innotrepid.resonate',
+    packageName: 'com.Aetherion.Resonate',
     version: '1.0.0',
     buildNumber: '42',
   );
@@ -33,10 +34,49 @@ void main() {
     );
   });
 
-  test('accepts a verified entitlement response', () async {
+  test('accepts a verified response only with a valid signed entitlement', () async {
+    final algorithm = Ed25519();
+    final keyPair = await algorithm.newKeyPair();
+    final publicKey = await keyPair.extractPublicKey();
+    final publicKeyBase64Url =
+        base64UrlEncode(publicKey.bytes).replaceAll('=', '');
+    final tokenVerifier = SignedEntitlementVerifier(
+      publicKeyBase64Url: publicKeyBase64Url,
+    );
+
+    final now = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+    final header = base64UrlEncode(utf8.encode(jsonEncode({
+      'alg': 'EdDSA',
+      'typ': 'JWT',
+      'kid': 'test-key',
+    }))).replaceAll('=', '');
+    final payload = base64UrlEncode(utf8.encode(jsonEncode({
+      'iss': 'innotrepid-security',
+      'aud': 'resonate',
+      'appId': 'resonate',
+      'entitlementId': 'premium',
+      'status': 'active',
+      'policyVersion': 1,
+      'iat': now,
+      'exp': now + 3600,
+      'cacheUntil': now + 900,
+      'verificationId': 'verification-1',
+      'subjectId': 'user-1',
+      'productId': 'resonate_premium',
+      'kid': 'test-key',
+    }))).replaceAll('=', '');
+    final signingInput = '$header.$payload';
+    final signature = await algorithm.sign(
+      utf8.encode(signingInput),
+      keyPair: keyPair,
+    );
+    final signedToken =
+        '$signingInput.${base64UrlEncode(signature.bytes).replaceAll('=', '')}';
+
     final client = SecurityClient(
       app: app,
       baseUrl: 'https://security.example',
+      tokenVerifier: tokenVerifier,
       httpClient: MockClient((request) async {
         expect(request.method, 'POST');
         expect(request.url.path, '/v1/verify');
@@ -49,11 +89,7 @@ void main() {
           jsonEncode({
             'status': 'verified',
             'verificationId': 'verification-1',
-            'entitlement': {
-              'id': 'premium',
-              'status': 'active',
-              'policyVersion': 1,
-            },
+            'signedEntitlementToken': signedToken,
           }),
           200,
           headers: {'content-type': 'application/json'},
@@ -68,6 +104,7 @@ void main() {
     );
 
     expect(result.status, VerificationStatus.verified);
+    expect(result.entitlement?.id, 'premium');
     expect(result.isPremium, isTrue);
     expect(client.hasEntitlement('premium'), isTrue);
   });

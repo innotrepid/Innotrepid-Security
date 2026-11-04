@@ -198,10 +198,10 @@ export class MercateLicenseRegistryService {
     requireCommandIdentity(command.businessId, command.actorId, command.idempotencyKey);
     if (!command.reason.trim()) throw new Error("revocation_reason_required");
     const now = requireNow(command.now);
-    return this.store.transact(command.businessId, (tx) => {
-      const replay = tx.getIdempotentResult(command.businessId, command.idempotencyKey);
+    return this.store.transact(command.businessId, async (tx) => {
+      const replay = await tx.getIdempotentResult(command.businessId, command.idempotencyKey);
       if (replay) return { ...replay, idempotentReplay: true };
-      const current = tx.getCurrent(command.businessId);
+      const current = await tx.getCurrent(command.businessId);
       if (!current) throw new Error("current_license_not_found");
       const revoked: MercateLicenseRecord = {
         ...current,

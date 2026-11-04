@@ -74,3 +74,15 @@ jobs:
         run: flutter pub get
       - name: Flutter analyze
         run: flutter analyze
+
+  key-manager-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check browser JavaScript syntax
+        run: |
+          node --check key-manager-web/app.js
+          node --check key-manager-web/config.js

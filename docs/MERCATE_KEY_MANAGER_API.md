@@ -34,3 +34,26 @@ Mutation responses include the signed activation token so the authorized operato
 - This module does not provision hosting, database infrastructure, Google OAuth clients or secrets.
 - The in-memory registry is test-only and must not be used for production issuance.
 - Existing Mercate client activation and offline verification behavior are unchanged.
+
+
+## Explicit server composition factory
+
+`server/src/mercate_key_manager_server.ts` now provides
+`createMercateKeyManagerServer(options)`. It composes Google OIDC
+verification, the server-owned operator allowlist, the PostgreSQL registry
+adapter and an injected Ed25519 signer into the Key Manager HTTP server.
+
+The factory deliberately does not call `listen()`, mount routes into the
+general-purpose server, read secrets from source-controlled config, or create
+an in-memory fallback. The host application owns the database pool lifecycle
+and must place this server behind a trusted HTTPS reverse proxy with strict
+routing, rate limiting and safe logging.
+
+The signer is injected through the `MercateLicenseSigner` interface. A PEM
+helper exists for a private key delivered by a deployment secret manager, but
+it is explicitly a transitional adapter, not managed HSM/KMS custody. Do not
+use it for real customer issuance until signing-key storage, access controls,
+rotation and recovery are approved.
+
+This composition factory is a wiring milestone only. It does not mean the API
+is deployed or ready to issue production licences.

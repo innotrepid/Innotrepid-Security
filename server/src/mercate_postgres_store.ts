@@ -22,6 +22,12 @@ interface IdempotencyRow {
   action: AuditEvent["action"];
   result_snapshot: MercateLicenseRecord;
 }
+interface AuditRow {
+  event_id: string; business_id: string; license_id: string;
+  action: AuditEvent["action"]; actor_id: string;
+  occurred_at: Date | string; idempotency_key: string;
+  previous_license_id: string | null;
+}
 function toIso(value: Date | string | null): string | undefined {
   if (value === null) return undefined;
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
@@ -61,6 +67,26 @@ export class PostgresMercateLicenseRegistryStore implements MercateLicenseRegist
           );
           const row = result.rows[0];
           return row ? { action: row.action, record: row.result_snapshot } : undefined;
+        },
+        listHistory: async (id) => {
+          const result = await client.query<LicenseRow>(
+            "SELECT * FROM mercate_licenses WHERE business_id = $1 ORDER BY created_at ASC, license_id ASC",
+            [id],
+          );
+          return result.rows.map(mapRecord);
+        },
+        listAuditEvents: async (id) => {
+          const result = await client.query<AuditRow>(
+            "SELECT event_id, business_id, license_id, action, actor_id, occurred_at, idempotency_key, previous_license_id FROM mercate_license_audit WHERE business_id = $1 ORDER BY occurred_at ASC, event_id ASC",
+            [id],
+          );
+          return result.rows.map((row) => ({
+            eventId: row.event_id, businessId: row.business_id,
+            licenseId: row.license_id, action: row.action, actorId: row.actor_id,
+            occurredAt: toIso(row.occurred_at)!,
+            idempotencyKey: row.idempotency_key,
+            ...(row.previous_license_id ? { previousLicenseId: row.previous_license_id } : {}),
+          }));
         },
         putLicense: async (record) => {
           await client.query(

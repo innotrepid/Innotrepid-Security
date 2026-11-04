@@ -40,6 +40,8 @@ export interface MercateLicenseTransaction {
     record: MercateLicenseRecord;
     action: MercateLicenseAuditEvent["action"];
   } | undefined>;
+  listHistory(businessId: string): Promise<MercateLicenseRecord[]>;
+  listAuditEvents(businessId: string): Promise<MercateLicenseAuditEvent[]>;
   putLicense(record: MercateLicenseRecord): Promise<void>;
   addAuditEvent(event: MercateLicenseAuditEvent): Promise<void>;
 }
@@ -113,6 +115,17 @@ export class MercateLicenseRegistryService {
     private readonly store: MercateLicenseRegistryStore,
     private readonly signer: MercateLicenseSigner,
   ) {}
+
+  async listHistory(businessId: string): Promise<{
+    licenses: MercateLicenseRecord[];
+    auditEvents: MercateLicenseAuditEvent[];
+  }> {
+    if (!businessId.trim()) throw new Error("businessId is required.");
+    return this.store.transact(businessId, async (tx) => ({
+      licenses: await tx.listHistory(businessId),
+      auditEvents: await tx.listAuditEvents(businessId),
+    }));
+  }
 
   issue(command: IssueMercateLicenseCommand): Promise<MercateLicenseLifecycleResult> {
     requireCommandIdentity(command.businessId, command.actorId, command.idempotencyKey);
@@ -303,6 +316,12 @@ export class MemoryMercateLicenseRegistryStore implements MercateLicenseRegistry
         getCurrent: async (id) => this.findCurrent(id),
         getLicense: async (id, licenseId) => this.licenses.get(this.licenseKey(id, licenseId)),
         getIdempotentResult: async (id, key) => this.idempotency.get(this.idempotencyKey(id, key)),
+        listHistory: async (id) => [...this.licenses.values()]
+          .filter((record) => record.businessId === id)
+          .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+        listAuditEvents: async (id) => this.audits
+          .filter((event) => event.businessId === id)
+          .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt)),
         putLicense: async (record) => {
           this.licenses.set(this.licenseKey(record.businessId, record.licenseId), record);
         },
@@ -331,9 +350,10 @@ export class MemoryMercateLicenseRegistryStore implements MercateLicenseRegistry
   }
 
   listAuditEvents(businessId: string): MercateLicenseAuditEvent[] {
-    return this.audits.filter((event) => event.businessId === businessId);
+    return this.audits
+      .filter((event) => event.businessId === businessId)
+      .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
   }
-
   private findCurrent(businessId: string): MercateLicenseRecord | undefined {
     return [...this.licenses.values()].find(
       (record) => record.businessId === businessId && record.status === "current",

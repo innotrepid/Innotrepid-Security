@@ -1,4 +1,4 @@
-group = "com.innotrepid.security"
+group = "com.innotrepid.security.googleplay"
 
 plugins {
     id("com.android.library")
@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.innotrepid.security"
+    namespace = "com.innotrepid.security.googleplay"
     compileSdk = 35
 
     defaultConfig {

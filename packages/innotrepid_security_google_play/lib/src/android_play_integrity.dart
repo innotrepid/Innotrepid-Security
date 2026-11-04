@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
-
-import 'integrity.dart';
+import 'package:innotrepid_security/innotrepid_security.dart';
 
 class AndroidPlayIntegrityTokenProvider implements IntegrityTokenProvider {
   AndroidPlayIntegrityTokenProvider({

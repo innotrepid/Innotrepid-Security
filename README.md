@@ -52,3 +52,14 @@ final cache = EntitlementCache(
 Apps that only need offline Ed25519 licence verification can depend on the core package without pulling in `flutter_secure_storage`. This keeps unrelated platform plugin constraints out of direct-distribution apps.
 
 The cache uses distinct keys per app ID and entitlement ID; tests cover cross-app isolation and targeted deletion.
+
+## Optional Google Play adapters
+
+The core SDK has no Google Play Billing or Play Integrity native-plugin dependency. Distribution-specific features are supplied separately:
+
+- `innotrepid_security_google_play` — Google Play Billing evidence and Android Play Integrity token provider.
+- `innotrepid_security_secure_storage` — optional Flutter Secure Storage adapter for the signed-entitlement cache.
+
+A direct-distribution APK such as Mercate can use the core Ed25519 licence verifier without adding either optional package. A Play-distributed app can add the Google Play adapter and pass `AndroidPlayIntegrityTokenProvider` to `SecurityClient`.
+
+Play purchase ownership and app-licensing verdicts must not be required for legitimate direct APK customers. Device-integrity signals, when configured, remain separate from purchase ownership and entitlement decisions.

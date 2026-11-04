@@ -1,13 +1,30 @@
-package com.innotrepid.security
+package com.innotrepid.security.googleplay
 
 import android.content.Context
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.atomic.AtomicBoolean
 
-class PlayIntegrityPlugin(private val context: Context) : MethodChannel.MethodCallHandler {
+class InnotrepidSecurityPlayIntegrityPlugin : FlutterPlugin {
+    private lateinit var channel: MethodChannel
+    private lateinit var integrityHandler: PlayIntegrityHandler
+
+    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        integrityHandler = PlayIntegrityHandler(binding.applicationContext)
+        channel = MethodChannel(binding.binaryMessenger, PlayIntegrityHandler.CHANNEL)
+        channel.setMethodCallHandler(integrityHandler)
+    }
+
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        channel.setMethodCallHandler(null)
+    }
+}
+
+private class PlayIntegrityHandler(private val context: Context) :
+    MethodChannel.MethodCallHandler {
     companion object {
         const val CHANNEL = "innotrepid_security/play_integrity"
     }
@@ -24,7 +41,8 @@ class PlayIntegrityPlugin(private val context: Context) : MethodChannel.MethodCa
                     return
                 }
 
-                val cloudProjectNumber = call.argument<Number>("cloudProjectNumber")?.toLong()
+                val cloudProjectNumber =
+                    call.argument<Number>("cloudProjectNumber")?.toLong()
                 if (cloudProjectNumber == null || cloudProjectNumber <= 0L) {
                     result.error("INVALID_ARGUMENT", "cloudProjectNumber is required", null)
                     return

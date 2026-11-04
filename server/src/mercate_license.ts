@@ -26,7 +26,7 @@ export interface MercateLicenseIssueInput {
 }
 
 export interface MercateLicenseSigner {
-  sign(payload: Uint8Array): Uint8Array;
+  sign(payload: Uint8Array): Promise<Uint8Array>;
 }
 
 /**
@@ -44,7 +44,7 @@ export class PemEd25519MercateLicenseSigner implements MercateLicenseSigner {
     }
   }
 
-  sign(payload: Uint8Array): Uint8Array {
+  async sign(payload: Uint8Array): Promise<Uint8Array> {
     return sign(null, Buffer.from(payload), this.privateKey);
   }
 }
@@ -151,10 +151,10 @@ export function calculateMercateExpiry(
 }
 
 /** Emits the exact v1 Mercate wire format: base64url(payload).base64url(signature). */
-export function issueMercateLicense(
+export async function issueMercateLicense(
   input: MercateLicenseIssueInput,
   signer: MercateLicenseSigner,
-): { claims: MercateLicenseClaims; token: string } {
+): Promise<{ claims: MercateLicenseClaims; token: string }> {
   assertIssueInput(input);
   const issuedAt = input.issuedAt ?? new Date();
   const expiresAt = calculateMercateExpiry(issuedAt, input.term);
@@ -170,7 +170,7 @@ export function issueMercateLicense(
   };
   if (!claims.licenseId.trim()) throw new Error("licenseId is required.");
   const payload = Buffer.from(JSON.stringify(claims), "utf8");
-  const signature = signer.sign(payload);
+  const signature = await signer.sign(payload);
   if (signature.length !== 64) throw new Error("Ed25519 signatures must be 64 bytes.");
   return {
     claims,

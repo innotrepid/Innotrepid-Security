@@ -21,7 +21,7 @@ test("does not grant premium from client state alone", () => {
     requestId: "test",
     app: {
       appId: "resonate",
-      packageName: "com.innotrepid.resonate",
+      packageName: "com.Aetherion.Resonate",
       version: "1.0.0"
     }
   });
@@ -35,7 +35,7 @@ test("does not pretend provider verification exists", () => {
     requestId: "test",
     app: {
       appId: "resonate",
-      packageName: "com.innotrepid.resonate",
+      packageName: "com.Aetherion.Resonate",
       version: "1.0.0"
     },
     purchaseToken: "example-token"

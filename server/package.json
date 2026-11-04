@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "node --test"
+    "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
     "google-auth-library": "11.1.0"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "tsx": "^4.20.6"
   }
 }

@@ -36,7 +36,11 @@ export function createMercateKeyManagerServer(
 ): Server {
   if (!options.googleClientId.trim()) throw new Error("google_client_id_required");
   if (!options.allowedOperators.length) throw new Error("operator_allowlist_required");
-  if (!options.database || typeof options.database.connect !== "function") {
+  if (
+    !options.database ||
+    typeof options.database.query !== "function" ||
+    typeof options.database.connect !== "function"
+  ) {
     throw new Error("durable_database_pool_required");
   }
   if (!options.signer || typeof options.signer.sign !== "function") {

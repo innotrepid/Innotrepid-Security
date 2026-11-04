@@ -43,7 +43,7 @@ void main() {
     expect(claims.licenseId, 'licence-123');
     expect(claims.maxDevices, 2);
     expect(claims.graceDays, 3);
-    expect(claims.expiresAt, DateTime.utc(2026, 12));
+    expect(claims.expiresAt, DateTime.utc(2026, 12, 1, 9));
   });
 
   test('rejects a token bound to a different business', () async {

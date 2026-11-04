@@ -1,0 +1,15 @@
+name: innotrepid_security_secure_storage
+description: Optional flutter_secure_storage adapter for Innotrepid Security.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.10.0 <4.0.0"
+  flutter: ">=3.38.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: ^11.2.0
+  innotrepid_security:
+    path: ../innotrepid_security

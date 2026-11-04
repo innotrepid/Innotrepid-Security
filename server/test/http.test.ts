@@ -3,18 +3,19 @@ import { once } from "node:events";
 import type { AddressInfo } from "node:net";
 import test from "node:test";
 import { createSecurityHttpServer } from "../src/http.js";
+import { buildIntegrityRequestHash } from "../src/crypto.js";
 import { MemoryEntitlementStore } from "../src/store.js";
 import type { IntegrityProvider, PurchaseProvider } from "../src/providers.js";
 
 const purchaseProvider: PurchaseProvider = {
   async verify() {
-    return { valid: true, subjectId: "user-1", productId: "premium" };
+    return { valid: true, subjectId: "user-1", productId: "resonate_premium" };
   },
 };
 
 const integrityProvider: IntegrityProvider = {
   async verify() {
-    return { valid: true, packageName: "com.innotrepid.resonate", subjectId: "user-1" };
+    return { valid: true, packageName: "com.Aetherion.Resonate", subjectId: "user-1" };
   },
 };
 
@@ -51,10 +52,16 @@ test("verify endpoint returns a validated entitlement", async () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         requestId: "request-1",
-        app: { appId: "resonate", packageName: "com.innotrepid.resonate", version: "1.0.0" },
+        app: { appId: "resonate", packageName: "com.Aetherion.Resonate", version: "1.0.0" },
         purchaseToken: "purchase-token",
         integrityToken: "integrity-token",
-        integrityRequestHash: "request-hash",
+        integrityRequestHash: buildIntegrityRequestHash({
+          requestId: "request-1",
+          appId: "resonate",
+          packageName: "com.Aetherion.Resonate",
+          version: "1.0.0",
+          purchaseToken: "purchase-token",
+        }),
       }),
     });
     assert.equal(response.status, 200);

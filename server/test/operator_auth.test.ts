@@ -4,6 +4,7 @@ import {
   hasKeyManagerPermission,
   KeyManagerOperatorAuthenticator,
   OperatorAuthenticationError,
+  type AllowedOperator,
   type OperatorTokenVerifier,
   type VerifiedOperatorIdentity,
 } from "../src/operator_auth.js";
@@ -17,7 +18,7 @@ const identity: VerifiedOperatorIdentity = {
 
 function authenticator(
   verified: VerifiedOperatorIdentity = identity,
-  allowed = [{ email: "owner@example.com", roles: ["administrator"] as const }],
+  allowed: readonly AllowedOperator[] = [{ email: "owner@example.com", roles: ["administrator"] }],
 ) {
   const verifier: OperatorTokenVerifier = {
     async verify(token, audience) {

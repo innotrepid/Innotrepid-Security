@@ -15,3 +15,5 @@ export * from "./operator_auth.js";
 export * from "./google_oidc.js";
 export * from "./key_manager_http.js";
 export * from "./mercate_key_manager_server.js";
+export * from "./mercate_postgres_store.js";
+export * from "./node_postgres_adapter.js";

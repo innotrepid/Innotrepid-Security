@@ -83,6 +83,46 @@ test("issued token matches Mercate v1 two-part Ed25519 contract", async () => {
   assert.equal(result.claims.maxDevices, 2);
 });
 
+
+test("issue awaits an asynchronous signer and preserves the v1 payload bytes", async () => {
+  const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+  let called = false;
+  const signer = {
+    async sign(payload: Uint8Array): Promise<Uint8Array> {
+      await Promise.resolve();
+      called = true;
+      const { sign: signBytes } = await import("node:crypto");
+      return signBytes(null, Buffer.from(payload), privateKey);
+    },
+  };
+  const result = await issueMercateLicense({
+    businessId: "async-business",
+    licenseId: "async-license",
+    issuedAt: at("2026-11-04T09:15:00.000Z"),
+    term: { kind: "weekly" },
+  }, signer);
+  assert.equal(called, true);
+  const [payloadPart, signaturePart] = result.token.split(".");
+  assert.equal(
+    verify(null, Buffer.from(payloadPart, "base64url"), publicKey,
+      Buffer.from(signaturePart, "base64url")),
+    true,
+  );
+});
+
+test("issue propagates asynchronous signer failures without returning a token", async () => {
+  const signer = {
+    async sign(): Promise<Uint8Array> {
+      throw new Error("kms_signing_unavailable");
+    },
+  };
+  await assert.rejects(issueMercateLicense({
+    businessId: "async-business",
+    term: { kind: "weekly" },
+    issuedAt: at("2026-11-04T09:15:00.000Z"),
+  }, signer), /kms_signing_unavailable/);
+});
+
 test("invalid policy values are rejected before asynchronous signing", async () => {
   const { privateKey } = generateKeyPairSync("ed25519");
   const signer = new PemEd25519MercateLicenseSigner(

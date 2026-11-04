@@ -1,6 +1,6 @@
 name: innotrepid_security
 description: Reusable entitlement and integrity client for Innotrepid Flutter applications.
-version: 0.7.0
+version: 0.8.0
 publish_to: none
 
 environment:
@@ -13,14 +13,6 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.6.0
-  in_app_purchase: ^3.3.1
-
-flutter:
-  plugin:
-    platforms:
-      android:
-        package: com.innotrepid.security
-        pluginClass: InnotrepidSecurityPlugin
 
 dev_dependencies:
   flutter_test:

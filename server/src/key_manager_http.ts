@@ -119,7 +119,7 @@ function requireIdempotencyKey(request: IncomingMessage): string {
   return requiredString(request.headers["idempotency-key"], "idempotency_key", 200);
 }
 
-function publicRecord(result: MercateLicenseLifecycleResult) {
+function publicRecord(result: MercateLicenseLifecycleResult, includeActivationToken = true) {
   return {
     action: result.action,
     idempotentReplay: result.idempotentReplay,
@@ -136,8 +136,7 @@ function publicRecord(result: MercateLicenseLifecycleResult) {
       ...(result.record.revokedBy ? { revokedBy: result.record.revokedBy } : {}),
       ...(result.record.revocationReason ? { revocationReason: result.record.revocationReason } : {}),
     },
-    // Only lifecycle mutation responses return the activation token.
-    activationToken: result.record.token,
+    ...(includeActivationToken ? { activationToken: result.record.token } : {}),
   };
 }
 
@@ -228,7 +227,7 @@ export function createKeyManagerHttpServer(options: KeyManagerHttpOptions): Serv
           reason: requiredString(data.reason, "reason", 2_000),
           now: options.now?.(),
         });
-        json(response, 200, publicRecord(result));
+        json(response, 200, publicRecord(result, false));
         return;
       }
 

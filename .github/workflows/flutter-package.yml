@@ -1,0 +1,28 @@
+name: Flutter security package
+
+on:
+  push:
+    paths:
+      - "packages/innotrepid_security/**"
+      - ".github/workflows/flutter-package.yml"
+  pull_request:
+    paths:
+      - "packages/innotrepid_security/**"
+      - ".github/workflows/flutter-package.yml"
+  workflow_dispatch:
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/innotrepid_security
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter --version
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test

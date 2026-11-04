@@ -14,3 +14,4 @@ export * from "./google_server.js";
 export * from "./operator_auth.js";
 export * from "./google_oidc.js";
 export * from "./key_manager_http.js";
+export * from "./mercate_key_manager_server.js";

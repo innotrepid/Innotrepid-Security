@@ -252,7 +252,7 @@ export class MercateLicenseRegistryService {
       previous?: MercateLicenseRecord;
     },
   ): Promise<MercateLicenseLifecycleResult> {
-    const issued = issueMercateLicense({
+    const issued = await issueMercateLicense({
       businessId: input.businessId,
       issuedAt: input.issuedAt,
       term: input.term,

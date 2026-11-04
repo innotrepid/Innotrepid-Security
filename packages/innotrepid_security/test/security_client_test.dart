@@ -105,7 +105,7 @@ void main() {
 
     expect(result.status, VerificationStatus.verified);
     expect(result.entitlement?.id, 'premium');
-    expect(result.isVerified, isTrue);
+    expect(result.isPremium, isTrue);
     expect(client.hasEntitlement('premium'), isTrue);
   });
 

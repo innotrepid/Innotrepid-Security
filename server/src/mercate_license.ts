@@ -141,7 +141,7 @@ export function calculateMercateExpiry(
       break;
     }
   }
-  if (!Number.isFinite(expiresAt.getTime()) || !expiresAt.getTime() || !expiresAt.getTime()) {
+  if (!Number.isFinite(expiresAt.getTime())) {
     throw new Error("expiresAt is invalid.");
   }
   if (expiresAt.getTime() <= issuedAt.getTime()) {

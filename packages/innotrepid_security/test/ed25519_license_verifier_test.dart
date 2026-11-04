@@ -7,7 +7,7 @@ import 'package:innotrepid_security/innotrepid_security.dart';
 void main() {
   late Ed25519 algorithm;
   late KeyPair keyPair;
-  late SimplePublicKey publicKey;
+  late PublicKey publicKey;
   late String publicKeyEncoded;
   late String token;
 

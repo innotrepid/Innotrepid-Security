@@ -1,52 +1,44 @@
-# Roadmap
+# Security Roadmap
 
 ## Phase 1 — Foundation
-- Repository structure
-- Application identity model
-- Entitlement model
-- SDK/server contracts
-- Security documentation
-- Secret-handling rules
+- Central repository and security model.
+- App registry and entitlement model.
+- Server verification boundary.
+- Google Play purchase and Play Integrity provider interfaces.
+- Flutter request binding and verification client.
 
-## Phase 2 — Flutter SDK
-- SDK initialization
-- Application registration
-- Entitlement state model
-- Secure local cache
-- Verification client
-- Feature-gate API
+## Phase 2 — Flutter commerce client
+- Google Play Billing through Flutter's official in_app_purchase plugin.
+- Store product → security entitlement mapping.
+- Purchase evidence extraction.
+- Purchase completion and restore flow.
+- Secure entitlement cache using platform secure storage.
 
 ## Phase 3 — Verification backend
-- App-request authentication
-- Google Play purchase verification
-- Play Integrity verification
-- Entitlement resolution
-- Revocation
-- Audit events
-- Rate limiting
+- Google Play purchase verification.
+- Play Integrity verification with request-hash binding.
+- Durable entitlement storage.
+- Replay protection, rate limits, audit events and revocation.
 
-## Phase 4 — First production integration
-- Resonate integration
-- Premium product mapping
-- Purchase restore
-- Offline grace policy
-- Failure/recovery UX
+## Phase 4 — Signed entitlement + offline grace
+- Server signs verified entitlements with Ed25519.
+- Client verifies the signature with an embedded public key.
+- Key IDs (kid) allow public-key rotation.
+- Signed tokens have a short cache lifetime even for lifetime purchases.
+- Secure local cache stores the signed token, never raw entitlement authority.
+- Bounded offline grace is enabled only from a still-valid signed token.
 
-## Phase 5 — Reuse
-- Mercate integration
-- Video Player integration
-- Shared release/versioning process
+## Phase 5 — First real app
+- Verify the actual package ID and Play product IDs for Resonate.
+- Integrate the security client and Android Play Integrity bridge.
+- Gate one premium feature first.
+- Test purchase, restore, reinstall, revoke and offline cases.
+- Only then reuse the system in Mercate and Video Player.
 
 ## Phase 6 — Hardening
-- Abuse detection
-- Replay resistance
-- Key rotation
-- Certificate/package validation
-- Automated security tests
-- Operational monitoring
-
-## Non-goals
-
-- Making software mathematically impossible to pirate.
-- Embedding master secrets in Flutter applications.
-- Blocking legitimate users merely because verification temporarily fails.
+- Configurable Play Integrity device/licensing verdict policy.
+- Durable storage, replay protection, rate limits and audit events.
+- Key rotation and public-key distribution strategy.
+- Abuse monitoring and anomaly detection.
+- Release-build/obfuscation review.
+- Incident/revocation procedures.
